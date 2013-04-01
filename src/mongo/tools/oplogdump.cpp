@@ -34,8 +34,8 @@ class OplogDumpTool : public Tool {
 public:
     OplogDumpTool() : Tool( "oplog", NONE ) {
         add_options()
-        ("begin,b" , po::value<string>() , "time to dump begin" )
-        ("end,e", po::value<string>(), "time to dump end")
+        ("begin,b" , po::value<int>() , "time to dump begin" )
+        ("end,e", po::value<int>(), "time to dump end")
         ("host", po::value<string>()->default_value("localhost") , "host to pull from" )
         ("oplogns", po::value<string>()->default_value( "local.oplog.rs" ) , "ns to pull from" )
         ("out,o", po::value<string>() , "output file" )
@@ -56,18 +56,14 @@ public:
             return -1;
         }
 
-        Client::initThread( "oplogreplay" );
+        //Client::initThread( "oplogreplay" );
 
-        log() << "going to connect" << endl;
-        
+
         OplogReader r(false);
         //r.setTailingQueryOptions( QueryOption_SlaveOk | QueryOption_AwaitData );  | QueryOption_OplogReplay
-        r.connect( getParam( "host" ) );
-
-        log() << "connected" << endl;
-        string start_time = getParam( "begin" , "0" );
-        OpTime start( boost::lexical_cast<unsigned long>(start_time.c_str()) , 0 );
-        log() << "starting from " << start.toStringPretty() << endl;
+        unsigned start_time = getParam( "begin" , 0 );
+        OpTime start( start_time , 0 );
+        log() << "starting from " << start_time << " " << start.toStringPretty() << endl;
 
         string ns = getParam( "oplogns" );
 
@@ -77,12 +73,18 @@ public:
             log() << "error opening file: " << out.string() << " " << errnoWithDescription() << endl;
             return -1;
         }
+
+        log() << "going to connect" << endl;
+        r.connect( getParam( "host" ) );
+        log() << "connected" << endl;
+
         r.tailingQueryGTE( ns.c_str() , start );
         size_t bytesWriten;
+        unsigned long i = 0;
+        log() << "dumping..." << endl;
         while ( r.more() ) {
             BSONObj o = r.next();
-            //log() << o.toString() << endl; 
-             
+
             if ( o["$err"].type() ) {
                 log() << "error getting oplog" << endl;
                 log() << o << endl;
@@ -92,7 +94,16 @@ public:
             if (bytesWriten < (size_t)o.objsize()) {
                 log() << "error write file " << ferror(file) << endl;
                 return -1;
-            } 
+            }
+            i++;
+            if (i % 10000 == 0) {
+                cout<<'.';
+                cout.flush();
+            }
+            if (i % (10000 * 50) == 0) {
+                cout<< '\t'<<i << endl;
+            }
+
         }
         fclose(file);
         log() << "finished." << endl;
