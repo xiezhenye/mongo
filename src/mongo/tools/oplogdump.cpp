@@ -15,7 +15,7 @@
 */
 
 #include "mongo/pch.h"
-
+#include <stdint.h>
 #include <boost/program_options.hpp>
 #include <fstream>
 #include <iostream>
@@ -34,8 +34,8 @@ class OplogDumpTool : public Tool {
 public:
     OplogDumpTool() : Tool( "oplog", NONE ) {
         add_options()
-        ("begin,b" , po::value<int>() , "time to dump begin" )
-        ("end,e", po::value<int>(), "time to dump end")
+        ("begin,b" , po::value<string>() , "time to dump begin" )
+        ("end,e", po::value<string>(), "time to dump end")
         ("host", po::value<string>()->default_value("localhost") , "host to pull from" )
         ("oplogns", po::value<string>()->default_value( "local.oplog.rs" ) , "ns to pull from" )
         ("out,o", po::value<string>() , "output file" )
@@ -65,12 +65,11 @@ public:
         r.connect( getParam( "host" ) );
 
         log() << "connected" << endl;
-
-        OpTime start( getParam( "begin" , 0 ) , 0 );
+        string start_time = getParam( "begin" , "0" );
+        OpTime start( boost::lexical_cast<unsigned long>(start_time.c_str()) , 0 );
         log() << "starting from " << start.toStringPretty() << endl;
 
         string ns = getParam( "oplogns" );
-        r.tailingQueryGTE( ns.c_str() , start );
 
         boost::filesystem::path out = getParam( "out" );
         FILE* file = fopen( out.string().c_str() , "wb" );
@@ -78,6 +77,7 @@ public:
             log() << "error opening file: " << out.string() << " " << errnoWithDescription() << endl;
             return -1;
         }
+        r.tailingQueryGTE( ns.c_str() , start );
         size_t bytesWriten;
         while ( r.more() ) {
             BSONObj o = r.next();
