@@ -624,7 +624,7 @@ Default( mongod )
 allToolFiles = [ "tools/tool.cpp", "tools/stat_util.cpp" ]
 env.StaticLibrary("alltools", allToolFiles, LIBDEPS=["serveronly", "coreserver", "coredb"])
 
-normalTools = [ "dump", "restore", "export", "import", "stat", "top", "oplog" ]
+normalTools = [ "dump", "restore", "export", "import", "stat", "top", "oplog", "oplogdump" ]
 env.Alias( "tools", [ "#/${PROGPREFIX}mongo" + x + "${PROGSUFFIX}" for x in normalTools ] )
 for x in normalTools:
     env.Install( '#/', env.Program( "mongo" + x, [ "tools/" + x + ".cpp" ],
