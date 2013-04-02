@@ -119,8 +119,9 @@ public:
         }
         fclose(file);
         OpTime last_time = o.getField("ts")._opTime();
-        cout << last_time.getSecs() << ' ' << last_time.getInc() << endl;
         log() << "finished." << endl;
+
+        cout << last_time.getSecs() << ' ' << last_time.getInc() << endl;
         return 0;
     }
 };
