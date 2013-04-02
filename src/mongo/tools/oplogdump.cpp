@@ -61,9 +61,19 @@ public:
 
         OplogReader r(false);
         //r.setTailingQueryOptions( QueryOption_SlaveOk | QueryOption_AwaitData );  | QueryOption_OplogReplay
-        unsigned start_time = getParam( "begin" , 0 );
-        OpTime start( start_time , 0 );
-        log() << "starting from " << start_time << " " << start.toStringPretty() << endl;
+        unsigned begin_time = getParam( "begin" , 0 );
+        unsigned end_time = getParam( "end" , 0 );
+        bool has_end_time = hasParam( "end" );
+        if (has_end_time && end_time <= begin_time) {
+            log() << "end time is earlier than begin time" << endl;
+            return -1;
+        }
+        OpTime start( begin_time , 0 );
+
+
+        OpTime end( end_time , 0 );
+
+        log() << "starting from " << begin_time << " " << start.toStringPretty() << endl;
 
         string ns = getParam( "oplogns" );
 
@@ -82,13 +92,16 @@ public:
         size_t bytesWriten;
         unsigned long i = 0;
         log() << "dumping..." << endl;
+        BSONObj o;
         while ( r.more() ) {
-            BSONObj o = r.next();
-
+            o = r.next();
             if ( o["$err"].type() ) {
                 log() << "error getting oplog" << endl;
                 log() << o << endl;
                 return -1;
+            }
+            if (has_end_time && o.getField("ts")._opTime().getSecs() >= end_time) {
+                break;
             }
             bytesWriten = fwrite(o.objdata(), sizeof(char), o.objsize(), file);
             if (bytesWriten < (size_t)o.objsize()) {
@@ -103,9 +116,10 @@ public:
             if (i % (10000 * 50) == 0) {
                 cout<< '\t'<<i << endl;
             }
-
         }
         fclose(file);
+        OpTime last_time = o.getField("ts")._opTime();
+        cout << last_time.getSecs() << ' ' << last_time.getInc() << endl;
         log() << "finished." << endl;
         return 0;
     }
