@@ -24,6 +24,7 @@
 #include "mongo/tools/tool.h"
 #include "mongo/util/mmap.h"
 #include "mongo/util/text.h"
+#include "mongo/db/namespacestring.h"
 
 using namespace mongo;
 
@@ -71,9 +72,9 @@ public:
         updates.done();
 
         BSONObj c = b.obj();
-            
+        //NamespaceString nss();
         BSONObj res;
-        bool ok = conn().runCommand( "admin" , c , res );
+        bool ok = conn().runCommand( nsToDatabase(o["ns"].String()), c , res );
         if (!ok) {
             log() << "reply " << res << " failed!" << endl;
         }
