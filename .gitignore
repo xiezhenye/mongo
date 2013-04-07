@@ -88,6 +88,10 @@ scratch
 /mongostat
 /mongotop
 /mongooplog
+
+/mongooplogdump
+/mongooplogrestore
+
 /mongoperf
 /bsondump
 /loadgen
