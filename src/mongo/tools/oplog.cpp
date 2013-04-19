@@ -25,6 +25,7 @@
 #include "mongo/db/repl/oplogreader.h"
 #include "mongo/tools/tool.h"
 #include "mongo/util/text.h"
+#include "mongo/db/namespacestring.h"
 
 using namespace mongo;
 
@@ -94,7 +95,7 @@ public:
             BSONObj c = b.obj();
             
             BSONObj res;
-            bool ok = conn().runCommand( "admin" , c , res );
+            bool ok = conn().runCommand( nsToDatabase(o["ns"].String()) , c , res );
             if ( print || ! ok )
                 log() << res << endl;
         }
