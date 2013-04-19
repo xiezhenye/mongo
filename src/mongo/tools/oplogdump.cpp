@@ -60,7 +60,7 @@ public:
 
 
         OplogReader r(false);
-        //r.setTailingQueryOptions( QueryOption_SlaveOk | QueryOption_AwaitData );  | QueryOption_OplogReplay
+        //r.setTailingQueryOptions( QueryOption_SlaveOk | QueryOption_AwaitData );  | h
         unsigned begin_time = getParam( "begin" , 0 );
         unsigned end_time = getParam( "end" , 0 );
         bool has_end_time = hasParam( "end" );
@@ -100,7 +100,7 @@ public:
                 log() << o << endl;
                 return -1;
             }
-            if (has_end_time && o.getField("ts")._opTime().getSecs() >= end_time) {
+            if (has_end_time && o["ts"]._opTime().getSecs() >= end_time) {
                 break;
             }
             bytesWriten = fwrite(o.objdata(), sizeof(char), o.objsize(), file);
@@ -118,7 +118,7 @@ public:
             }
         }
         fclose(file);
-        OpTime last_time = o.getField("ts")._opTime();
+        OpTime last_time = o["ts"]._opTime();
         log() << "finished." << endl;
 
         cout << last_time.getSecs() << ' ' << last_time.getInc() << endl;
